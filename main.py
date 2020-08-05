@@ -1,12 +1,16 @@
 import sys
 from kb import KB
+from rule import Rule
 
-def load_knowledge_base(kb_path):
-    kb = KB(kb_path)
+def init_rules(kb, minconf):
+    rules = [Rule([atom]) for atom in list(kb.rso.keys())]
+    
+def get_rules(kb, minconf=0.1):
+    rules = init_rules(kb, minconf)
 
 def main(argv):
-    kb_path = argv[0]
-    kb = load_knowledge_base(kb_path)
+    kb = KB(argv[0])
+    get_rules(kb)
     
 if __name__ == '__main__':
     main(sys.argv[1:])
