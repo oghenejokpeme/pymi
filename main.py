@@ -1,11 +1,9 @@
 import sys
+from kb import KB
 
 def load_knowledge_base(kb_path):
-    with open(kb_path, 'r') as f:
-        for line in f:
-            nline = line.strip()[:-1].split('\t')
-            sub, rel, obj = nline
-            
+    kb = KB(kb_path)
+
 def main(argv):
     kb_path = argv[0]
     kb = load_knowledge_base(kb_path)
