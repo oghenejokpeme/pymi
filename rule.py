@@ -20,8 +20,7 @@ class Rule:
         return len(self.get_instantiations(kb))
     
     def size(self, kb):
-        head_rel = self.rule[0][1]
-        return len(kb.rels[head_rel])
+        return len(kb.rels[self.rule[0][1]])
 
     def head_coverage(self, kb):
         return self.support(kb)/self.size(kb)
