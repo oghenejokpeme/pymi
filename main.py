@@ -11,6 +11,5 @@ def get_rules(kb, minconf=0.1):
 def main(argv):
     kb = KB(argv[0])
 
-    
 if __name__ == '__main__':
     main(sys.argv[1:])
