@@ -19,18 +19,23 @@ class Rule:
     def support(self, kb):
         return len(self.get_instantiations(kb))
     
+    def size(self, kb):
+        head_rel = self.rule[0][1]
+        return len(kb.rels[head_rel])
+
     def head_coverage(self, kb):
-        return self.support(kb)/len(self.rule)
+        return self.support(kb)/self.size(kb)
 
     def standard_confidence(self, kb):
         # Note: Loops through rule twice. Refactor later.
-        insts = kb.rels[self.rule[0][1]]
+        insts = set()
         for atom in self.rule[1:]:
             _, rel, _ = atom
-            insts = insts.symmetric_difference(kb.rels[rel])
+            insts = insts.union(kb.rels[rel])
         
         return self.support(kb)/len(insts)
     
+    # Still incorrect, fix next.
     def pca_confidence(self, kb):
         insts = self.get_instantiations(kb)
         
