@@ -39,7 +39,7 @@ class Rule:
                 for obj in kb.rso[rel][sub]:
                     sopairs.add((sub, obj))
                 #print(sub,' -> ', kb.rso[rel][sub])
-        #print(sopairs)
+
         return len(sopairs)
 
     def support(self, kb):
@@ -57,9 +57,8 @@ class Rule:
         except ZeroDivisionError:
             return float('inf')
 
-    # Still incorrect, fix next.
     def pca_confidence(self, kb):
-        # Rules must have body atoms
+        # For empty rules, as rules must have body atoms.
         if len(self.rule) == 1:
             return float('inf')
 
