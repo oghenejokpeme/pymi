@@ -59,19 +59,19 @@ class KB:
             if ls == 1 and os == 1:
                 return self.rels[rel]
             
-            elif ls == 1 and os != 1:
+            elif ls == 1 and os == 2:
                 insts = {(sub, rel, ovar[1]) 
                          for sub in self.ros[rel][ovar[1]]}
                 
                 return insts
 
-            elif ls != 1 and os == 1:
+            elif ls == 2 and os == 1:
                 insts = {(svar[1], rel, obj) 
                          for obj in self.rso[rel][svar[1]]}
                 
                 return insts
             
-            elif ls != 1 and os != 1:
+            elif ls == 2 and os == 2:
                 srels = self.sor[svar[1]][ovar[1]]
                 orels = self.osr[ovar[1]][svar[1]]
 
@@ -108,7 +108,7 @@ class KB:
         except KeyError:
             return 0
 
-    def bind_instantiation(self, atom, inst, rule):
+    def instantiate_rule_with_bindings(self, atom, inst, rule):
         asvar, rel, aovar = atom
         assym = asvar[0]
         aosym = aovar[0]
@@ -141,25 +141,25 @@ class KB:
         return brule
 
     # Checks for binding for conjuctive query.
-    def exists(self, rule):
-        if len(rule) == 1:
-            return self.get_atom_size(rule[0]) > 0
+    def exists(self, q):
+        if len(q) == 1:
+            return self.get_atom_size(q[0]) > 0
         else:
-            s = [self.get_atom_size(atom) for atom in rule]
+            s = [self.get_atom_size(atom) for atom in q]
             sidx = s.index(min(s))
-            satom = rule[sidx]
-            _, srel, _ = satom
-            qp = [atom for atom in rule if atom != satom]
+            satom = q[sidx]
+            q = [atom for atom in q if atom != satom]
             insts = self.instantiate_relation(satom)
-            
+
             for inst in insts:
-                qp = self.bind_instantiation(satom, inst, qp)
+                print(' ', inst)
+                qp = self.instantiate_rule_with_bindings(satom, inst, q)
                 if self.exists(qp):
                     return True
         
         return False
 
-    def rule_instantiation(self, var, atom, sinst, oinst, rule):
+    def instantiate_rule_with_variable(self, var, atom, sinst, oinst, rule):
         asvar, rel, aovar = atom
         assym = asvar[0]
         aosym = aovar[0]
@@ -193,22 +193,48 @@ class KB:
         sidx = s.index(min(s))
         satom = rule[sidx]
         svar, srel, ovar = satom
+        print(satom)
         insts = self.instantiate_relation(satom)
 
         if var == svar[0] or var == ovar[0]:
+            #print('*')
             for inst in insts:
                 sinst, _, oinst = inst
-                qp = self.rule_instantiation(var, satom, sinst, oinst, rule)
+                qp = self.instantiate_rule_with_variable(var, satom, sinst, 
+                                                         oinst, rule)
+
                 if self.exists(qp):
                     if var == svar[0]:
                         result.add(sinst)
                     if var == ovar[0]:
                         result.add(oinst)
-        
+                
         else:
+            #print('!')
             q = [atom for atom in rule if atom != satom]
             for inst in insts:
-                qp = self.bind_instantiation(satom, inst, q)
-                result.add(select_distinct(var, qp))
-
+                qp = self.instantiate_rule_with_bindings(satom, inst, q)
+                result.union(self.select_distinct(var, qp))
+                
         return result
+    
+    def select_count(self, rule):
+        print('ORule: ', rule)
+        head_rel = rule[0]
+        sub, _, obj = head_rel
+        sub_var = sub[0]
+        obj_var = obj[0]
+        
+        c = 0
+        sub_distinct = self.select_distinct(sub_var, rule)
+        print(' Subs: ', len(sub_distinct))
+        for sub in sub_distinct:
+            qp = self.instantiate_rule_with_variable(sub_var, head_rel, sub, 
+                                                     '', rule)
+            #print('  QP: ', sub, qp)
+            obj_distinct = self.select_distinct(obj_var, qp)
+            #print(obj_distinct)
+            #print(' Objs: ', obj_distinct)
+            c += len(obj_distinct)
+        
+        return c
