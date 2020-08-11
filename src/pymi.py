@@ -1,5 +1,5 @@
 import sys
-from modules import kb, rule
+from modules import kb, queries, rule
 
 def main(argv):
     kba = kb.load_kb(argv[0])
