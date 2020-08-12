@@ -51,3 +51,6 @@ def get_atom_instantiations(atom, db):
     
     except KeyError:
         return set()
+
+def get_atom_size(atom, db):
+    return len(get_atom_instantiations(atom, db))

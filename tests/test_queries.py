@@ -63,5 +63,30 @@ class TestQueries(unittest.TestCase):
             get_atom_instantiations(b, self.adb)
             get_atom_instantiations(c, self.adb)
 
+    def test_atom_size(self):
+        adba = (('?a',), '<LivesIn>', ('?b',))
+        adbb = (('?a', '<Adam>'), '<LivesIn>', ('?b',))
+        adbc = (('?a',), '<LivesIn>', ('?b', '<Rome>'))
+        adbd = (('?a', '<Adam>'), '<LivesIn>', ('?b', '<Rome>'))
+        adbe = (('?a', '<Adam>'), '<LivesIn>', ('?b', '<Spain>'))
+        
+        tdba = (('?a',), '<LivesIn>', ('?b',))
+        tdbb = (('?a', '<Danai>'), '<LivesIn>', ('?b',))
+        tdbc = (('?a',), '<wasBornIn>', ('?b', '<Colmar>'))
+        tdbd = (('?a',), '<LivesIn>', ('?b', '<Paris>'))
+        tdbe = (('?a', '<Antoine>'), '<wasBornIn>', ('?b', '<Colmar>'))
+
+        self.assertEqual(get_atom_size(adba, self.adb), 3)
+        self.assertEqual(get_atom_size(adbb, self.adb), 2)
+        self.assertEqual(get_atom_size(adbc, self.adb), 1)
+        self.assertEqual(get_atom_size(adbd, self.adb), 1)
+        self.assertEqual(get_atom_size(adbe, self.adb), 0)
+
+        self.assertEqual(get_atom_size(tdba, self.tdb), 4)
+        self.assertEqual(get_atom_size(tdbb, self.tdb), 1)
+        self.assertEqual(get_atom_size(tdbc, self.tdb), 1)
+        self.assertEqual(get_atom_size(tdbd, self.tdb), 2)
+        self.assertEqual(get_atom_size(tdbe, self.tdb), 1)
+
 if '__name__' == '__main__':
     unittest.main()
