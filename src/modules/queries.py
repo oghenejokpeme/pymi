@@ -169,20 +169,24 @@ def select_distinct_for_query(var, query, db, result):
 
 def get_count(head, body, db):
     """The query may or may not include the head of a rule."""
-    q = set()
+
+    q = body
     if head:
         q = body.union({head})
+    else:
+        import random
+        head = random.sample(body, 1)[0]
         
-        sub, rel, obj = head
-        subvar = sub[0]
-        objvar = obj[0]
+    sub, rel, obj = head
+    subvar = sub[0]
+    objvar = obj[0]
 
-        count = 0
-        sub_distinct = select_distinct_for_query(subvar, q, db, set())
-        for subinst in sub_distinct:
-            tiatom = ((subvar, subinst), rel, obj) 
-            _, qp = instantiate_query_with_var_bindings(subvar, q, tiatom)
-            obj_distinct = select_distinct_for_query(objvar, qp, db, set()) 
-            count += len(obj_distinct)
-        
-        return count
+    count = 0
+    sub_distinct = select_distinct_for_query(subvar, q, db, set())
+    for subinst in sub_distinct:
+        tiatom = ((subvar, subinst), rel, obj) 
+        _, qp = instantiate_query_with_var_bindings(subvar, q, tiatom)
+        obj_distinct = select_distinct_for_query(objvar, qp, db, set()) 
+        count += len(obj_distinct)
+    
+    return count
