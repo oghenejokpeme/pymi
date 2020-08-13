@@ -83,8 +83,7 @@ def instantiate_query_with_atom_bindings(query, iatom):
 def check_query_existence(query, db):
     """The query is the list of all body atoms of a rule. That is,
     it is the rule with the head atom."""
-    #print()
-    #print(query)
+
     if len(query) == 1:
         return get_atom_size(query.pop(), db) > 0
     else:
@@ -92,10 +91,7 @@ def check_query_existence(query, db):
         satom = s[min(s)]
         query.remove(satom)
         insts = get_atom_instantiations(satom, db)
-        #print(' s: ', s)
-        #print(' satom: ', satom)
-        #print(' insts: ', insts)
-        #print(' query: ', query)
+
         for inst_atom in insts:
             qp = instantiate_query_with_atom_bindings(query, inst_atom)
             if check_query_existence(qp, db):
@@ -104,7 +100,7 @@ def check_query_existence(query, db):
     return False
 
 def instantiate_query_with_var_bindings(var, query, iatom):
-    isub, irel, iobj = iatom
+    isub, _, iobj = iatom
     isubvar = isub[0]
     iobjvar = iobj[0]
 
@@ -159,6 +155,7 @@ def select_distinct_for_query(var, query, db, result):
     if var_in_atom(var, satom):
         for inst_atom in insts:
             ent, qp = instantiate_query_with_var_bindings(var, query, inst_atom)
+            
             if check_query_existence(qp, db):
                 result.add(ent)
     
@@ -169,3 +166,23 @@ def select_distinct_for_query(var, query, db, result):
             result.union(select_distinct_for_query(var, qp, db, result))
 
     return result
+
+def get_count(head, body, db):
+    """The query may or may not include the head of a rule."""
+    q = set()
+    if head:
+        q = body.union({head})
+        
+        sub, rel, obj = head
+        subvar = sub[0]
+        objvar = obj[0]
+
+        count = 0
+        sub_distinct = select_distinct_for_query(subvar, q, db, set())
+        for subinst in sub_distinct:
+            tiatom = ((subvar, subinst), rel, obj) 
+            _, qp = instantiate_query_with_var_bindings(subvar, q, tiatom)
+            obj_distinct = select_distinct_for_query(objvar, qp, db, set()) 
+            count += len(obj_distinct)
+        
+        return count
