@@ -167,12 +167,44 @@ def select_distinct_for_query(var, query, db, result):
 
     return result
 
+def is_expensive(head, body):
+    """A rule is expensive if:
+    1. It contains variables other than those that appear in the head
+       atom.
+    2. If these additional variables define a single path between head
+       variables."""
+    # @TODO: Move to rule file. This is a rule only computation.
+    sub, _, obj = head
+    checks = {True:0, False:0}
+    for batom in body:
+        bsub, _, bobj = batom
+        if sub[0] == bsub[0] and obj[0] == bobj[0]:
+            checks[False] += 1
+        elif sub[0] == bobj[0] and obj[0] == bsub[0]:
+            checks[False] += 1
+        else:
+            checks[True] += 1
+
+    if checks[False] == len(body):
+        return False
+    else:
+        # Still needs the code that checks for condition 2 above.
+        return True
+
 def get_count(head, body, db):
-    """The query may or may not include the head of a rule."""
+    """The query may or may not include the head of a rule.
+    Support -> Head and body.
+    CWA numerator -> Just body. Head = None."""
 
     q = body
     if head:
-        q = body.union({head})
+        if not is_expensive(head, body):
+            q = body.union({head})
+       
+        else:
+            # Perform approximate metric computation.
+            return False
+
     else:
         import random
         head = random.sample(body, 1)[0]
