@@ -129,7 +129,7 @@ def instantiate_query_with_var_bindings(var, query, iatom):
         return (iobj[1], bquery)
     else:
         raise Exception('Variable binding error!')
-    
+
 def var_in_atom(var, atom):
     """Checks if variable is in an atom and the variable has not been
     assigned an entity."""
@@ -147,7 +147,7 @@ def select_distinct_for_query(var, query, db, result):
     the query conjunction."""
     # Note: Need to handle the case where ?var is not in any of the 
     # query atoms.
-    
+
     s = {get_atom_size(atom, db):atom for atom in query}
     satom = s[min(s)]
     insts = get_atom_instantiations(satom, db)
@@ -199,12 +199,10 @@ def get_count(head, body, db):
     q = body
     if head:
         if not is_expensive(head, body):
-            q = body.union({head})
-       
+            q = body.union({head}) 
         else:
             # Perform approximate metric computation.
             return False
-
     else:
         import random
         head = random.sample(body, 1)[0]
@@ -222,3 +220,32 @@ def get_count(head, body, db):
         count += len(obj_distinct)
     
     return count
+
+def get_pca_count(fvar, head, body, db):
+    hsub, _, hobj = head
+    hsubvar = hsub[0]
+    hobjvar = hobj[0]
+    
+    ypvar = ''
+    if fvar == hsubvar:
+        ypvar = hobjvar
+    elif fvar == hobjvar:
+        ypvar = hsubvar
+
+    insts = get_atom_instantiations(head, db)
+    dn = set()
+    for ainst in insts:
+        asub, _, aobj = ainst
+        asvar, asent = asub
+        aovar, aoent = aobj 
+
+        _, qp = instantiate_query_with_var_bindings(fvar, body, ainst)
+        obj_distinct = select_distinct_for_query(ypvar, qp, db, set())
+        
+        for dobj in obj_distinct:
+            if fvar == asvar:
+                dn.add((asent, dobj))
+            elif fvar == aovar:
+                dn.add((aoent, dobj))
+    
+    return len(dn)
