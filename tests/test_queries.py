@@ -1,5 +1,6 @@
 import unittest
 from src.modules.kb import load_kb
+from src.modules.rule import Atom
 from src.modules.queries import *
 
 class TestQueries(unittest.TestCase):
@@ -10,38 +11,39 @@ class TestQueries(unittest.TestCase):
         cls.ydb = load_kb('./tests/kbs/yago2_sample.tsv')
 
     def test_legal_atom_instantiation(self):
-        adba = (('?a',), '<LivesIn>', ('?b',))
-        adba_res = {(('?a', '<Adam>'), '<LivesIn>', ('?b', '<Paris>')), 
-                    (('?a', '<Adam>'), '<LivesIn>', ('?b', '<Rome>')),
-                    (('?a', '<Bob>'),  '<LivesIn>', ('?b', '<Zurich>'))}
-        
-        adbb = (('?a', '<Adam>'), '<LivesIn>', ('?b',))
-        adbb_res = {(('?a', '<Adam>'), '<LivesIn>', ('?b', '<Paris>')), 
-                    (('?a', '<Adam>'), '<LivesIn>', ('?b', '<Rome>'))}
+        adba = Atom('?a', None, '<LivesIn>', '?b', None)
+        adba_res = {Atom('?a', '<Adam>', '<LivesIn>', '?b', '<Paris>'),
+                    Atom('?a', '<Adam>', '<LivesIn>', '?b', '<Rome>'),
+                    Atom('?a', '<Bob>', '<LivesIn>', '?b', '<Zurich>')}
 
-        adbc = (('?a',), '<LivesIn>', ('?b', '<Rome>'))
-        adbc_res = {(('?a', '<Adam>'), '<LivesIn>', ('?b', '<Rome>'))}
+        adbb = Atom('?a', '<Adam>', '<LivesIn>', '?b', None)
+        adbb_res = {Atom('?a', '<Adam>', '<LivesIn>', '?b', '<Paris>'),
+                    Atom('?a', '<Adam>', '<LivesIn>', '?b', '<Rome>')}
+            
+        adbc = Atom('?a', None, '<LivesIn>', '?b', '<Rome>')
+        adbc_res = {Atom('?a', '<Adam>', '<LivesIn>', '?b', '<Rome>')}
+                
+        adbd = Atom('?a', None, '<LivesIn>', '?b', '<Rome>')
+        adbd_res = {Atom('?a', '<Adam>', '<LivesIn>', '?b', '<Rome>')}
         
-        adbd = (('?a', '<Adam>'), '<LivesIn>', ('?b', '<Rome>'))
-        adbd_res = {(('?a', '<Adam>'), '<LivesIn>', ('?b', '<Rome>'))}
-        
-        tdba = (('?a',), '<LivesIn>', ('?b',))
-        tdba_res = {(('?a', '<Jean>'),    '<LivesIn>', ('?b', '<Paris>')), 
-                    (('?a', '<Thomas>'),  '<LivesIn>', ('?b', '<Munich>')),
-                    (('?a', '<Antoine>'), '<LivesIn>', ('?b', '<Paris>')),
-                    (('?a', '<Danai>'),   '<LivesIn>', ('?b', '<Marseille>'))}
-        
-        tdbb = (('?a', '<Danai>'), '<LivesIn>', ('?b',))
-        tdbb_res = {(('?a', '<Danai>'), '<LivesIn>', ('?b', '<Marseille>'))}
+        tdba = Atom('?a', None, '<LivesIn>', '?b', None)
+        tdba_res = {Atom('?a', '<Jean>',    '<LivesIn>', '?b', '<Paris>'),
+                    Atom('?a', '<Thomas>',  '<LivesIn>', '?b', '<Munich>'),
+                    Atom('?a', '<Antoine>', '<LivesIn>', '?b', '<Paris>'),
+                    Atom('?a', '<Danai>',   '<LivesIn>', '?b', '<Marseille>')}
 
-        tdbc = (('?a',), '<wasBornIn>', ('?b', '<Colmar>'))
-        tdbc_res = {(('?a', '<Antoine>'), '<wasBornIn>', ('?b', '<Colmar>'))}
+        tdbb = Atom('?a', '<Danai>', '<LivesIn>', '?b', None)
+        tdbb_res = {Atom('?a', '<Danai>',   '<LivesIn>', '?b', '<Marseille>')}
 
-        tdbd = (('?a',), '<LivesIn>', ('?b', '<Paris>'))
-        tdbd_res = {(('?a', '<Jean>'),    '<LivesIn>', ('?b', '<Paris>')),
-                    (('?a', '<Antoine>'), '<LivesIn>', ('?b', '<Paris>'))}
-        tdbe = (('?a', '<Antoine>'), '<wasBornIn>', ('?b', '<Colmar>'))
-        tdbe_res = {(('?a', '<Antoine>'), '<wasBornIn>', ('?b', '<Colmar>'))}
+        tdbc = Atom('?a', None, '<wasBornIn>', '?b', '<Colmar>')
+        tdbc_res = {Atom('?a', '<Antoine>',   '<wasBornIn>', '?b', '<Colmar>')}
+
+        tdbd = Atom('?a', None, '<LivesIn>', '?b', '<Paris>')
+        tdbd_res = {Atom('?a', '<Jean>',    '<LivesIn>', '?b', '<Paris>'),
+                    Atom('?a', '<Antoine>', '<LivesIn>', '?b', '<Paris>')}
+
+        tdbe = Atom('?a', '<Antoine>', '<wasBornIn>', '?b', '<Colmar>')
+        tdbe_res = {Atom('?a', '<Antoine>', '<wasBornIn>', '?b', '<Colmar>')}
 
         self.assertEqual(get_atom_instantiations(adba, self.adb), adba_res)
         self.assertEqual(get_atom_instantiations(adbb, self.adb), adbb_res)
@@ -54,28 +56,18 @@ class TestQueries(unittest.TestCase):
         self.assertEqual(get_atom_instantiations(tdbd, self.tdb), tdbd_res)
         self.assertEqual(get_atom_instantiations(tdbe, self.tdb), tdbe_res)
 
-    def test_illegal_atom_instantiation(self):
-        a = (('?a', '<a>', '<a>'), '<LivesIn>', ('?b',))
-        b = (('?a',), '<LivesIn>', ('?b', '<b>', '<b>'))
-        c = (('?a', '<a>', '<a>'), '<LivesIn>', ('?b', '<b>', '<b>'))
-        
-        with self.assertRaises(Exception): 
-            get_atom_instantiations(a, self.adb)
-            get_atom_instantiations(b, self.adb)
-            get_atom_instantiations(c, self.adb)
-
     def test_atom_size(self):
-        adba = (('?a',), '<LivesIn>', ('?b',))
-        adbb = (('?a', '<Adam>'), '<LivesIn>', ('?b',))
-        adbc = (('?a',), '<LivesIn>', ('?b', '<Rome>'))
-        adbd = (('?a', '<Adam>'), '<LivesIn>', ('?b', '<Rome>'))
-        adbe = (('?a', '<Adam>'), '<LivesIn>', ('?b', '<Spain>'))
-        
-        tdba = (('?a',), '<LivesIn>', ('?b',))
-        tdbb = (('?a', '<Danai>'), '<LivesIn>', ('?b',))
-        tdbc = (('?a',), '<wasBornIn>', ('?b', '<Colmar>'))
-        tdbd = (('?a',), '<LivesIn>', ('?b', '<Paris>'))
-        tdbe = (('?a', '<Antoine>'), '<wasBornIn>', ('?b', '<Colmar>'))
+        adba = Atom('?a', None, '<LivesIn>', '?b', None)
+        adbb = Atom('?a', '<Adam>', '<LivesIn>', '?b', None)
+        adbc = Atom('?a', None, '<LivesIn>', '?b', '<Rome>')
+        adbd = Atom('?a', '<Adam>', '<LivesIn>', '?b', '<Rome>')
+        adbe = Atom('?a', '<Adam>', '<LivesIn>', '?b', '<Spain>')
+
+        tdba = Atom('?a', None, '<LivesIn>', '?b', None)
+        tdbb = Atom('?a', '<Danai>', '<LivesIn>', '?b', None)
+        tdbc = Atom('?a', None, '<wasBornIn>', '?b', '<Colmar>')
+        tdbd = Atom('?a', None, '<LivesIn>', '?b', '<Paris>')
+        tdbe = Atom('?a', '<Antoine>', '<wasBornIn>', '?b', '<Colmar>')
 
         self.assertEqual(get_atom_size(adba, self.adb), 3)
         self.assertEqual(get_atom_size(adbb, self.adb), 2)
@@ -90,108 +82,121 @@ class TestQueries(unittest.TestCase):
         self.assertEqual(get_atom_size(tdbe, self.tdb), 1)
     
     def test_instantiate_query_with_atom_bindings(self):
-        iaa = (('?a',), '<rel>', ('?b',))
-        iab = (('?a', '<svar>'), '<rel>', ('?b',))
-        iac = (('?a',), '<rel>', ('?b', '<ovar>'))
-        iad = (('?a', '<svar>'), '<rel>', ('?b', '<ovar>'))  
+        iaa = Atom('?a', None, '<rel>', '?b', None)
+        iab = Atom('?a', '<svar>', '<rel>', '?b', None)
+        iac = Atom('?a', None, '<rel>', '?b', '<ovar>')
+        iad = Atom('?a', '<svar>', '<rel>', '?b', '<ovar>') 
         
-        q = {(('?a',), '<relA>', ('?b',))}
+        q = {Atom('?a', None, '<relA>', '?b', None)}
         self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
-                         {(('?a',), '<relA>', ('?b',))})
+                         {Atom('?a', None, '<relA>', '?b', None)})
         self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
-                         {(('?a', '<svar>'), '<relA>', ('?b',))})
+                         {Atom('?a', '<svar>', '<relA>', '?b', None)})
         self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
-                         {(('?a',), '<relA>', ('?b', '<ovar>'))})
+                         {Atom('?a', None, '<relA>', '?b', '<ovar>')})
         self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
-                         {(('?a', '<svar>'), '<relA>', ('?b', '<ovar>'))})
-        
-        q = {(('?a',), '<relA>', ('?c',))}
+                         {Atom('?a', '<svar>', '<relA>', '?b', '<ovar>')})
+    
+        q = {Atom('?a', None, '<relA>', '?c', None)}  
         self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
-                         {(('?a',), '<relA>', ('?c',))})
+                         {Atom('?a', None, '<relA>', '?c', None)})
         self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
-                         {(('?a', '<svar>'), '<relA>', ('?c',))})
+                         {Atom('?a', '<svar>', '<relA>', '?c', None)})
         self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
-                         {(('?a',), '<relA>', ('?c',))})
+                         {Atom('?a', None, '<relA>', '?c', None)})
         self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
-                         {(('?a', '<svar>'), '<relA>', ('?c',))})
-        
-        q = {(('?e',), '<relA>', ('?b',))}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
-                         {(('?e',), '<relA>', ('?b',))})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
-                         {(('?e',), '<relA>', ('?b',))})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
-                         {(('?e',), '<relA>', ('?b', '<ovar>'))})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
-                         {(('?e',), '<relA>', ('?b', '<ovar>'))})
+                         {Atom('?a', '<svar>', '<relA>', '?c', None)})
 
-        q = {(('?e',), '<relA>', ('?f',))}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
-                         {(('?e',), '<relA>', ('?f',))})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
-                         {(('?e',), '<relA>', ('?f',))})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
-                         {(('?e',), '<relA>', ('?f',))})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
-                         {(('?e',), '<relA>', ('?f',))})
-
-        q = {(('?b',), '<relA>', ('?a',))}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
-                         {(('?b',), '<relA>', ('?a',))})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
-                         {(('?b',), '<relA>', ('?a', '<svar>'))})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
-                         {(('?b', '<ovar>'), '<relA>', ('?a',))})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
-                         {(('?b', '<ovar>'), '<relA>', ('?a', '<svar>'))})
         
-        q = {(('?a',), '<relA>', ('?b',)), (('?a',), '<relB>', ('?b',))}
-        aq = {(('?a',), '<relA>', ('?b',)), (('?a',), '<relB>', ('?b',))}
+        q = {Atom('?e', None, '<relA>', '?b', None)}
+        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
+                         {Atom('?e', None, '<relA>', '?b', None)})
+        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
+                         {Atom('?e', None, '<relA>', '?b', None)})
+        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
+                         {Atom('?e', None, '<relA>', '?b', '<ovar>')})
+        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
+                         {Atom('?e', None, '<relA>', '?b', '<ovar>')})
+
+
+        q = {Atom('?e', None, '<relA>', '?f', None)}
+        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
+                         {Atom('?e', None, '<relA>', '?f', None)})
+        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
+                         {Atom('?e', None, '<relA>', '?f', None)})
+        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
+                         {Atom('?e', None, '<relA>', '?f', None)})
+        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
+                         {Atom('?e', None, '<relA>', '?f', None)})
+
+        q = {Atom('?b', None, '<relA>', '?a', None)}
+        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
+                         {Atom('?b', None, '<relA>', '?a', None)})
+        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
+                         {Atom('?b', None, '<relA>', '?a', '<svar>')})
+        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
+                         {Atom('?b', '<ovar>', '<relA>', '?a', None)})
+        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
+                         {Atom('?b', '<ovar>', '<relA>', '?a', '<svar>')})
+      
+        q  = {Atom('?a', None, '<relA>', '?b', None), 
+              Atom('?a', None, '<relB>', '?b', None)}
+        aq = {Atom('?a', None, '<relA>', '?b', None), 
+              Atom('?a', None, '<relB>', '?b', None)}
         self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), aq)
-        aq = {(('?a', '<svar>'), '<relA>', ('?b',)), 
-              (('?a', '<svar>'), '<relB>', ('?b',))}
+        
+        aq = {Atom('?a', '<svar>', '<relA>', '?b', None), 
+              Atom('?a', '<svar>', '<relB>', '?b', None)}
         self.assertEqual(instantiate_query_with_atom_bindings(q, iab), aq)
-        aq = {(('?a',), '<relA>', ('?b', '<ovar>')), 
-              (('?a',), '<relB>', ('?b', '<ovar>'))}
+        
+        aq = {Atom('?a', None, '<relA>', '?b', '<ovar>'), 
+              Atom('?a', None, '<relB>', '?b', '<ovar>')}
         self.assertEqual(instantiate_query_with_atom_bindings(q, iac), aq)
-        aq = {(('?a', '<svar>'), '<relA>', ('?b', '<ovar>')), 
-              (('?a', '<svar>'), '<relB>', ('?b', '<ovar>'))}
+        
+        aq = {Atom('?a', '<svar>', '<relA>', '?b', '<ovar>'), 
+              Atom('?a', '<svar>', '<relB>', '?b', '<ovar>')}
         self.assertEqual(instantiate_query_with_atom_bindings(q, iad), aq)
 
-        q = {(('?a',), '<relA>', ('?e',)), (('?b',), '<relB>', ('?f',))}
-        aq = {(('?a',), '<relA>', ('?e',)), (('?b',), '<relB>', ('?f',))}
+        q  = {Atom('?a', None, '<relA>', '?e', None), 
+              Atom('?b', None, '<relB>', '?f', None)}
+        aq = {Atom('?a', None, '<relA>', '?e', None), 
+              Atom('?b', None, '<relB>', '?f', None)}
         self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), aq)
-        aq = {(('?a', '<svar>'), '<relA>', ('?e',)), 
-              (('?b',), '<relB>', ('?f',))}
+        
+        aq = {Atom('?a', '<svar>', '<relA>', '?e', None), 
+              Atom('?b', None, '<relB>', '?f', None)}
         self.assertEqual(instantiate_query_with_atom_bindings(q, iab), aq)
-        aq = {(('?a',), '<relA>', ('?e',)), 
-              (('?b', '<ovar>'), '<relB>', ('?f',))}
+        
+        aq = {Atom('?a', None, '<relA>', '?e', None), 
+              Atom('?b', '<ovar>', '<relB>', '?f', None)}
         self.assertEqual(instantiate_query_with_atom_bindings(q, iac), aq)
-        aq = {(('?a', '<svar>'), '<relA>', ('?e',)), 
-              (('?b', '<ovar>'), '<relB>', ('?f',))}
+        
+        aq = {Atom('?a', '<svar>', '<relA>', '?e', None), 
+              Atom('?b', '<ovar>', '<relB>', '?f', None)}
         self.assertEqual(instantiate_query_with_atom_bindings(q, iad), aq)
+
 
     def test_check_query_existence(self):
-        adbq = {(('?a',), '<LivesIn>', ('?b',))} 
+        adbq = {Atom('?a', None, '<LivesIn>', '?b', None)} 
         self.assertEqual(check_query_existence(adbq, self.adb), True)
 
-        adbq = {(('?a',), '<LivesIn>', ('?b',)),
-                (('?a',), '<wasBornIn>', ('?c',))}
+        adbq = {Atom('?a', None, '<LivesIn>', '?b', None),
+                Atom('?a', None, '<wasBornIn>', '?c', None)}
         self.assertEqual(check_query_existence(adbq, self.adb), True)
 
-        adbq = {(('?a',), '<DiedIn>', ('?b',)),
-                (('?a',), '<wasBornIn>', ('?b',))}
+        adbq = {Atom('?a', None, '<DiedIn>', '?b', None),
+                Atom('?a', None, '<wasBornIn>', '?c', None)}
         self.assertEqual(check_query_existence(adbq, self.adb), False)
 
-        ydbq = {(('?a',), '<wasBornIn>', ('?b',))}
+        ydbq = {Atom('?a', None, '<wasBornIn>', '?b', None)}
         self.assertEqual(check_query_existence(ydbq, self.ydb), True)
 
-        ydbq = {(('?f',), '<hasChild>', ('?b',)),
-                (('?a',), '<isMarriedTo>', ('?f',))}
+        ydbq = {Atom('?f', None, '<hasChild>', '?b', None),
+                Atom('?a', None, '<isMarriedTo>', '?f', None)}
         self.assertEqual(check_query_existence(ydbq, self.ydb), True)
 
-        ydbq = {(('?e',), '<graduatedFrom>', ('?b',)), 
-                (('?e',), '<hasAcademicAdvisor>', ('?a',))}
+        ydbq = {Atom('?e', None, '<graduatedFrom>', '?b', None), 
+                Atom('?e', None, '<hasAcademicAdvisor>', '?a', None)}
         self.assertEqual(check_query_existence(ydbq, self.ydb), True)
 
 

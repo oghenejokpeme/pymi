@@ -1,49 +1,22 @@
+from .rule import Atom
+
 def get_atom_instantiations(atom, db):
-    """Returns the set of all instantiations of an atom. Atoms can 
-    take one of the following forms:
-    a. ((?svar), relation, (?ovar))
-    b. ((?svar, subject), relation, (?ovar))
-    c. ((?svar), relation, (?ovar, object))
-    d. ((?svar, subject), relation, (?ovar, object))
-    """
-    sub, rel, obj = atom
-    
-    if len(sub) > 2 or len(sub) < 1:
-        raise Exception(f'Illegal atom subject in: {atom}.')
-    if len(obj) > 2 or len(obj) < 1:
-        raise Exception(f'Illegal atom object in: {atom}.')
-
     try:
-        if len(sub) == 1 and len(obj) == 1:
-            subvar = sub[0]
-            objvar = obj[0]
-            
-            insts = set()
-            for fact in db['agg_index']['P'][rel]:
-                fsub, _, fobj = fact
-                insts.add(((subvar, fsub), rel, (objvar, fobj)))
-            
-            return insts
-
-        elif len(sub) == 2 and len(obj) == 1:
-            subvar, subinst = sub
-            objvar = obj[0]
-
-            return {(sub, rel, (objvar, iobj)) 
-                    for iobj in db['kb']['RSO'][rel][subinst]}
+        if not atom.subinst and not atom.objinst:
+            return {atom.make_general_instance(fact) 
+                    for fact in db['agg_index']['P'][atom.rel]}
+                
+        elif atom.subinst and not atom.objinst:
+            return {atom.make_object_instance(objinst) for objinst 
+                    in db['kb']['RSO'][atom.rel][atom.subinst]}
         
-        elif len(sub) == 1 and len(obj) == 2:
-            subvar = sub[0]
-            objvar, objinst = obj
-
-            return {((subvar, isub), rel, obj) 
-                    for isub in db['kb']['ROS'][rel][objinst]}
+        elif not atom.subinst and atom.objinst:
+            return {atom.make_subject_instance(subinst) for subinst 
+                    in db['kb']['ROS'][atom.rel][atom.objinst]}
         
-        elif len(sub) == 2 and len(obj) == 2:
-            _, subinst = sub
-            _, objinst = obj
-
-            if (subinst, rel, objinst) in db['agg_index']['P'][rel]:
+        elif atom.subinst and atom.objinst:
+            fact = (atom.subinst, atom.rel, atom.objinst)
+            if fact in db['agg_index']['P'][atom.rel]:
                 return {atom}
             else:
                 return set()
@@ -55,30 +28,27 @@ def get_atom_size(atom, db):
     return len(get_atom_instantiations(atom, db))
 
 def instantiate_query_with_atom_bindings(query, iatom):
-    isub, irel, iobj = iatom
-    isubvar = isub[0]
-    iobjvar = iobj[0]
-
-    bquery = set()
-    for qatom in query:
-        qsub, qrel, qobj = qatom
-        qsubvar = qsub[0]
-        qobjvar = qobj[0]
-        temp_sub = qsub
-        temp_obj = qobj
-
-        if isubvar == qsubvar:
-            temp_sub = isub
-        if iobjvar == qobjvar:
-            temp_obj = iobj
-        if isubvar == qobjvar:
-            temp_obj = isub
-        if iobjvar == qsubvar:
-            temp_sub = iobj
-        
-        bquery.add((temp_sub, qrel, temp_obj))
+    """Insantantiates the subject and object of the atoms in a query 
+    with the subject and object of an input atom (iatom). Does not
+    care if the atoms in the query have already been initialized. 
+    They get re-initialized if they already have been."""
     
-    return bquery
+    nquery = set()
+    for qatom in query:
+        sv, si, rel, ov, oi = qatom
+
+        if iatom.subvar == qatom.subvar:
+            si = iatom.subinst
+        if iatom.objvar == qatom.objvar:
+            oi = iatom.objinst
+        if iatom.subvar == qatom.objvar:
+            oi = iatom.subinst
+        if iatom.objvar == qatom.subvar:
+            si = iatom.objinst
+
+        nquery.add(Atom(sv, si, rel, ov, oi))
+    
+    return nquery
 
 def check_query_existence(query, db):
     """The query is the list of all body atoms of a rule. That is,
