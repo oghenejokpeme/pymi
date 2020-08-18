@@ -55,7 +55,7 @@ class Atom:
         else:
             return False
 
-# @TODO: Writes code that handles condition 2.
+# @TODO: Write code that handles condition 2.
 def is_expensive(head, body):
     """A rule is expensive if:
     1. It contains variables other than those that appear in the head

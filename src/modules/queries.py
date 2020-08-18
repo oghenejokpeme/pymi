@@ -1,4 +1,4 @@
-from modules import rule
+from . import rule
 
 def get_atom_instantiations(atom, db):
     try:
@@ -121,21 +121,8 @@ def select_distinct_for_query(var, query, db, result):
 
     return result
 
-def get_count(head, body, db):
-    """The query may or may not include the head of a rule. Returns:
-    Support -> Head and body.
-    CWA numerator -> Just body. Head = None."""
-
-    q = body
-    if head:
-        if not rule.is_expensive(head, body):
-            q = body.union({head}) 
-        else:
-            #@TODO: Write code that performs approximate metric computation.
-            return False
-    else:
-        import random
-        head = random.sample(body, 1)[0]
+def supp_cwa_denom_calc(q, head, db):
+    """Main algorithm for calculating support and the CWA denominator."""
 
     count = 0
     sub_distinct = select_distinct_for_query(head.subvar, q, db, set())
@@ -147,9 +134,26 @@ def get_count(head, body, db):
 
     return count
 
+def calc_standard_support(head, body, db):
+    """Calculates standard support for a rule. Assumes that rule is 
+    not 'expensive'."""
+    
+    q = body.union({head})
+    return supp_cwa_denom_calc(q, head, db)
+    
+def calc_standard_cwa_denom(body, db):
+    """Calculates standard CWA denominator. Assumes that rule is not 
+    'expensive'."""
+    import random
+    # @TODO: This should be the atom whose subject variable matches
+    # that of the head atom. For clarity, but it should not matter.
+    head = random.sample(body, 1)[0] 
+    q = body
+    return supp_cwa_denom_calc(q, head, db)
 
-def get_pca_count(fvar, head, body, db):
-    """Returns PCA numerator."""
+def calc_standard_pca_denom(fvar, head, body, db):
+    """Calculates standard PCA denominator. Assumes that rule is not 
+    'expensive'."""
 
     ypvar = ''
     if fvar == head.subvar: ypvar = head.objvar
