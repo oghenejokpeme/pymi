@@ -55,24 +55,106 @@ class Atom:
         else:
             return False
 
-# @TODO: Write code that handles condition 2.
-def is_expensive(head, body):
-    """A rule is expensive if:
-    1. It contains variables other than those that appear in the head
-       atom.
-    2. If these additional variables define a single path between head
-       variables."""
+# @NOTE: This should all probably be part of a Rule class.
+def has_only_head_variables(head, body):
+    hvars = {head.subvar, head.objvar}
+    for atom in body:
+        if atom.subvar not in hvars or atom.objvar not in hvars:
+            return False
 
-    checks = {True:0, False:0}
+    return True
+
+def has_single_head_variable_occurence(head, body):
+    """Checks if head variables occur exactly once in the body atoms.
+    """
+    hvars = {head.subvar:0, head.objvar:0}
     for batom in body:
-        if head.subvar == batom.subvar and head.objvar == batom.objvar:
-            checks[False] += 1
-        elif head.subvar == batom.objvar and head.objvar == batom.subvar:
-            checks[False] += 1
-        else:
-            checks[True] += 1
+        if batom.subvar in hvars:
+            hvars[batom.subvar] += 1
+            if hvars[batom.subvar] > 1: return False
+        if batom.objvar in hvars:
+            hvars[batom.objvar] += 1
+            if hvars[batom.objvar] > 1: return False
 
-    if checks[False] == len(body):
+    return True
+
+def make_canonical(fvar, head, body):
+    """Canonicalization is done based on the provided functional
+    variable which must be either the subject or object variable
+    of the head atom. Also assumes that the head subject and 
+    object variables only occur once in the body atoms.
+    """
+    lvar = ''
+    if fvar == head.subvar:
+        lvar = head.objvar
+    else:
+        lvar = head.subvar
+
+    fconfig = ()
+    lconfig = ()
+    flatoms = set()
+    for batom in body:
+        # First body atom.
+        if fvar == batom.subvar:
+            fconfig = (0, batom.rel, batom.subvar, batom.objvar)
+            flatoms.add(batom)
+        if fvar == batom.objvar:
+            fconfig = (1, batom.rel, batom.objvar, batom.subvar)
+            flatoms.add(batom)
+
+        # Last body atom.
+        if lvar == batom.subvar:
+            lconfig = (1, batom.rel, batom.objvar, batom.subvar)
+            flatoms.add(batom)
+        if lvar == batom.objvar:
+            lconfig = (0, batom.rel, batom.subvar, batom.objvar)
+            flatoms.add(batom)
+    
+    join_order = [fconfig]
+    tbody = body - flatoms
+
+    '''
+    # @NOTE: It is possible to fall into an infinite loop if for any reason
+    # an atom is present that does not share any variables with the most 
+    # recently added atom to the join order. Another way to write this is
+    # to loop through the entire chain to atoms multiple times?
+    while tbody != set():
+        for tatom in tbody:
+            if fconfig[3] == tatom.subvar:
+                join_order.append((0, tatom.rel, tatom.subvar, tatom.objvar))
+                tbody.remove(tatom)
+                break
+
+            if join_order[-1][3] == tatom.subvar:
+                join_order.append((0, tatom.rel, tatom.subvar, tatom.objvar))
+                tbody.remove(tatom)
+                break
+            
+            elif join_order[-1][3] == tatom.objvar:
+                join_order.append((1, tatom.rel, tatom.objvar, tatom.subvar))
+                tbody.remove(tatom)
+                break
+    join_order.append(lconfig)
+    #'''
+    return join_order  
+
+def has_single_path(fvar, head, body):
+    join_order = make_canonical(fvar, head, body)
+
+def is_expensive(fvar, head, body):
+    """Checks if rule is expensive."""
+    if fvar not in (head.subvar, head.objvar):
+        # @TODO: Make this text more informative.
+        oe = 'Unable to canonicalize. Functional variable mismatch.'
+        raise Exception(oe)
+    
+    if has_only_head_variables(head, body):
         return False
+    if has_single_head_variable_occurence(head, body):
+        # It may or may not be expensive
+        if has_single_path(fvar, head, body):
+            return True
+        else:
+            return False
     else:
         return True
