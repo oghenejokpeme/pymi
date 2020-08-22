@@ -54,6 +54,12 @@ class Atom:
             return True
         else:
             return False
+    
+    def get_non_functional_var(self, fvar):
+        if fvar == self.subvar:
+            return self.objvar
+        elif fvar == self.objvar:
+            return self.subvar
 
 # @NOTE: This should all probably be part of a Rule class.
 def has_only_head_variables(head, body):
@@ -84,11 +90,7 @@ def make_canonical(fvar, head, body):
     of the head atom. Also assumes that the head subject and 
     object variables only occur once in the body atoms.
     """
-    lvar = ''
-    if fvar == head.subvar:
-        lvar = head.objvar
-    else:
-        lvar = head.subvar
+    lvar = head.get_non_functional_var(fvar)
 
     fconfig = ()
     lconfig = ()
@@ -113,37 +115,68 @@ def make_canonical(fvar, head, body):
     join_order = [fconfig]
     tbody = body - flatoms
 
-    '''
-    # @NOTE: It is possible to fall into an infinite loop if for any reason
-    # an atom is present that does not share any variables with the most 
-    # recently added atom to the join order. Another way to write this is
-    # to loop through the entire chain to atoms multiple times?
-    while tbody != set():
-        for tatom in tbody:
-            if fconfig[3] == tatom.subvar:
-                join_order.append((0, tatom.rel, tatom.subvar, tatom.objvar))
-                tbody.remove(tatom)
-                break
-
-            if join_order[-1][3] == tatom.subvar:
-                join_order.append((0, tatom.rel, tatom.subvar, tatom.objvar))
-                tbody.remove(tatom)
+    for tatom in tbody:
+        for ordatom in join_order:
+            if lconfig[2] == tatom.subvar:
+                ent = (1, tatom.rel, tatom.objvar, tatom.subvar)
+                join_order.append(ent)
                 break
             
-            elif join_order[-1][3] == tatom.objvar:
-                join_order.append((1, tatom.rel, tatom.objvar, tatom.subvar))
-                tbody.remove(tatom)
+            if lconfig[2] == tatom.objvar:
+                ent = (0, tatom.rel, tatom.subvar, tatom.objvar)
+                join_order.append(ent)
+                break
+            
+            if ordatom[3] == tatom.subvar:
+                ent = (0, tatom.rel, tatom.subvar, tatom.objvar)
+                join_order.append(ent)
+                break 
+
+            elif ordatom[3] == tatom.objvar:
+                ent = (1, tatom.rel, tatom.objvar, tatom.subvar)   
+                join_order.append(ent)
                 break
     join_order.append(lconfig)
-    #'''
+    
     return join_order  
+
+def make_join_graph(join_order):
+    jgraph = {}
+    for atom in join_order:
+        _, _, subvar, objvar = atom
+        try:
+            jgraph[subvar].append(objvar)
+        except KeyError:
+            jgraph[subvar] = [objvar]
+    jgraph[join_order[-1][3]] = None
+
+    return jgraph
+
+def find_join_paths(sv, obv, g, path=None):
+    paths = []
+    if path is None:
+        path = []
+    path.append(sv)
+    objs = g[sv]
+    if objs:
+        for obj in objs:
+            paths.extend(find_join_paths(obj, obv, g, path[:]))
+    else:
+        if path[-1] == obv:
+            paths.append(path)
+    
+    return paths
 
 def has_single_path(fvar, head, body):
     join_order = make_canonical(fvar, head, body)
+    join_graph = make_join_graph(join_order)
+    join_paths = find_join_paths(fvar, head.get_non_functional_var(fvar), 
+                                 join_graph, None)
+
 
 def is_expensive(fvar, head, body):
     """Checks if rule is expensive."""
-    if fvar not in (head.subvar, head.objvar):
+    if not head.var_in_atom(fvar):
         # @TODO: Make this text more informative.
         oe = 'Unable to canonicalize. Functional variable mismatch.'
         raise Exception(oe)
