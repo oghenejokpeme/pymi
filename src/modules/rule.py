@@ -61,6 +61,8 @@ class Atom:
         elif fvar == self.objvar:
             return self.subvar
 
+'''
+# Functions for approximate metric estimation.
 # @NOTE: This should all probably be part of a Rule class.
 def has_only_head_variables(head, body):
     hvars = {head.subvar, head.objvar}
@@ -192,3 +194,4 @@ def is_expensive(fvar, head, body):
             return False
     else:
         return True
+'''

@@ -121,50 +121,53 @@ def select_distinct_for_query(var, query, db, result):
 
     return result
 
-def supp_cwa_denom_calc(q, head, db):
-    """Main algorithm for calculating support and the CWA denominator."""
-
+def calc_support(head, body, db):
+    q = body.union({head})
+    
     count = 0
-    sub_distinct = select_distinct_for_query(head.subvar, q, db, set())
+    sub_distinct = select_distinct_for_query(head.subvar, q.copy(), db, set())
     for subinst in sub_distinct:
         iatom = head.make_subject_instance(subinst)
         _, qp = instantiate_query_with_var_bindings(head.subvar, q, iatom)
         obj_distinct = select_distinct_for_query(head.objvar, qp, db, set())
+          
         count += len(obj_distinct)
-
-    return count
-
-def calc_standard_support(head, body, db):
-    """Calculates standard support for a rule. Assumes that rule is 
-    not 'expensive'."""
     
-    q = body.union({head})
-    return supp_cwa_denom_calc(q, head, db)
+    return count 
     
-def calc_standard_cwa_denom(hsubvar, body, db):
+def calc_standard_cwa_denom(fvar, head, body, db):
     """Calculates standard CWA denominator. Assumes that rule is not 
     'expensive'."""
-    for atom in body:
-        if atom.var_in_atom(hsubvar):
-            head = atom
-            q = body.copy()
-            return supp_cwa_denom_calc(q, head, db)
+    q = body.copy()
+    nfvar = head.get_non_functional_var(fvar)
+    
+    count = 0
+    fvar_distinct = select_distinct_for_query(fvar, q.copy(), db, set())
 
-    raise Exception('Cannot compute standard CWA denominator.')
+    for fvarinst in fvar_distinct:
+        iatom = '' 
+        if head.subvar == fvar:
+            iatom = head.make_subject_instance(fvarinst)
+        elif head.objvar == fvar:
+            iatom = head.make_object_instance(fvarinst)
+
+        _, qp = instantiate_query_with_var_bindings(fvar, q, iatom)
+        nfvar_distinct = select_distinct_for_query(nfvar, qp, db, set())
+          
+        count += len(nfvar_distinct)
+
+    return count
 
 def calc_standard_pca_denom(fvar, head, body, db):
     """Calculates standard PCA denominator. Assumes that rule is not 
     'expensive'."""
 
-    ypvar = ''
-    if fvar == head.subvar: ypvar = head.objvar
-    elif fvar == head.objvar: ypvar = head.subvar
-
+    nfvar = head.get_non_functional_var(fvar)
     dn = set()
     insts = get_atom_instantiations(head, db)
     for iatom in insts:
         _, qp = instantiate_query_with_var_bindings(fvar, body, iatom)
-        obj_distinct = select_distinct_for_query(ypvar, qp, db, set())
+        obj_distinct = select_distinct_for_query(nfvar, qp, db, set())
         
         for dobj in obj_distinct:
             if fvar == iatom.subvar:
