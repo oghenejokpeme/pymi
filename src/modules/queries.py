@@ -141,15 +141,16 @@ def calc_standard_support(head, body, db):
     q = body.union({head})
     return supp_cwa_denom_calc(q, head, db)
     
-def calc_standard_cwa_denom(body, db):
+def calc_standard_cwa_denom(hsubvar, body, db):
     """Calculates standard CWA denominator. Assumes that rule is not 
     'expensive'."""
-    import random
-    # @TODO: This should be the atom whose subject variable matches
-    # that of the head atom. For clarity, but it should not matter.
-    head = random.sample(body, 1)[0] 
-    q = body
-    return supp_cwa_denom_calc(q, head, db)
+    for atom in body:
+        if atom.var_in_atom(hsubvar):
+            head = atom
+            q = body.copy()
+            return supp_cwa_denom_calc(q, head, db)
+
+    raise Exception('Cannot compute standard CWA denominator.')
 
 def calc_standard_pca_denom(fvar, head, body, db):
     """Calculates standard PCA denominator. Assumes that rule is not 

@@ -172,7 +172,8 @@ def has_single_path(fvar, head, body):
     join_graph = make_join_graph(join_order)
     join_paths = find_join_paths(fvar, head.get_non_functional_var(fvar), 
                                  join_graph, None)
-
+    
+    return len(join_paths) == 1
 
 def is_expensive(fvar, head, body):
     """Checks if rule is expensive."""

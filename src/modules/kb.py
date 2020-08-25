@@ -55,12 +55,14 @@ def estimate_relation_functionalities(db):
     # The inverse functionality is calculated by reversing x and y in r.
     # See Equation 5 in Appendix A of PARIS: Probabilitic Alignment of
     # Relations, Instances, and Schema (https://arxiv.org/pdf/1111.7164.pdf)
+    # domain = len(db['kb']['RSO'][rel])
+    # range = len(db['kb']['ROS'][rel])
     for rel in db['agg_index']['P']:
         func = len(db['kb']['RSO'][rel])/len(db['agg_index']['P'][rel])
-        ifunc = len(db['kb']['ROS'][rel])/len(db['agg_index']['P'][rel])
-        db['funct'][rel] = round(func, 3)
-        db['inv_funct'][rel] = round(ifunc, 3)
-
+        ifunc = len(db['kb']['ROS'][rel])/len(db['agg_index']['P'][rel])    
+        db['funct'][rel] = func
+        db['inv_funct'][rel] = ifunc
+            
 def estimate_overlaps(db):
     """Calculates the overlaps for all pairs of relations in the KB."""
     from itertools import combinations
