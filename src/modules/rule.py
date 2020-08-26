@@ -60,6 +60,12 @@ class Atom:
             return self.objvar
         elif fvar == self.objvar:
             return self.subvar
+    
+    def var_inst(self, var):
+        if var == self.subvar:
+            return self.subinst
+        elif var == self.objvar:
+            return self.objinst
 
 '''
 # Functions for approximate metric estimation.
