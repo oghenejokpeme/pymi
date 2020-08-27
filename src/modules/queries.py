@@ -85,13 +85,11 @@ def instantiate_with_var_bindings(var, iatom, qatom):
 def select_distinct_for_query(var, query, db, result):
     """Identifies all entities for ?var in a query which satisfies 
     the query conjunction."""
-    # Note: Need to handle the case where ?var is not in any of the 
-    # query atoms.
 
     s = {get_atom_size(atom, db):atom for atom in query}
     satom = s[min(s)]
     insts = get_atom_instantiations(satom, db)
-
+    
     if satom.var_in_atom(var):
         for iatom in insts:
             qp = {instantiate_with_var_bindings(var, iatom, qatom)
@@ -109,6 +107,36 @@ def select_distinct_for_query(var, query, db, result):
             result.union(select_distinct_for_query(var, qp, db, result))
 
     return result
+
+
+def count_projection_for_query(var, head, body, threshold, db):
+    xmap = {}
+    query = body
+    
+    insts = get_atom_instantiations(head, db)
+    if head.var_in_atom(var):        
+        for iatom in insts:
+            qp = query.copy()
+            qp.add(iatom)
+            if check_query_existence(qp, db):
+                try:
+                    xmap[iatom.var_inst(var)] += 1
+                except KeyError:
+                    xmap[iatom.var_inst(var)] = 1
+    
+    else:
+        for iatom in insts:
+            qp = query.copy()
+            qp.add(iatom)
+            var_distinct = select_distinct_for_query(var, qp, db, set())
+            for varsub in var_distinct:
+                try:
+                    xmap[varsub] += 1
+                except KeyError:
+                    xmap[varsub] = 1
+    
+    return {svar:n for svar, n in xmap.items() if n >= threshold}
+
 
 def calc_support(head, body, db):
     count = 0

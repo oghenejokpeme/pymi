@@ -99,7 +99,7 @@ def estimate_overlaps(db):
 
 def load_kb(kb_path):
     db = process_kb(kb_path)
-    estimate_relation_functionalities(db)
-    estimate_overlaps(db)
+    #estimate_relation_functionalities(db)
+    #estimate_overlaps(db)
 
     return db
