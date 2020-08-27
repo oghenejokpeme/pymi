@@ -123,7 +123,7 @@ def count_projection_for_query(var, patom, rule, threshold, db):
     
     insts = get_atom_instantiations(patom, db)
     print(len(insts))
-    #'''
+ 
     if patom.var_in_atom(var):        
         for iatom in insts:
             qp = query.copy()
@@ -146,7 +146,7 @@ def count_projection_for_query(var, patom, rule, threshold, db):
                     xmap[varsub] = 1
     
     return {svar:n for svar, n in xmap.items() if n >= threshold}
-#'''
+
 
 def calc_support(head, body, db):
     count = 0
