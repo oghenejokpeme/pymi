@@ -49,6 +49,17 @@ class Atom:
                    'atom variable.')
             raise Exception(out)
 
+    def make_projection_instance(self, fact):
+        fsubinst, frel, fobjinst = fact
+        if self.subinst == None and self.objinst != None:
+            return Atom(self.subvar, fsubinst, frel, self.objvar, self.objinst)
+        
+        elif self.subinst != None and self.objinst == None:
+            return Atom(self.subvar, self.subinst, frel, self.objvar, fobjinst)
+        
+        elif self.subinst == None and self.objinst == None:
+            return Atom(self.subvar, fsubinst, frel, self.objvar, fobjinst)
+
     def var_in_atom(self, var):
         if self.subvar == var or self.objvar == var:
             return True

@@ -2,25 +2,33 @@ from . import rule
 
 def get_atom_instantiations(atom, db):
     try:
-        if not atom.subinst and not atom.objinst:
-            return {atom.make_general_instance(fact) 
-                    for fact in db['agg_index']['P'][atom.rel]}
-                
-        elif atom.subinst and not atom.objinst:
-            return {atom.make_object_instance(objinst) for objinst 
-                    in db['kb']['RSO'][atom.rel][atom.subinst]}
-        
-        elif not atom.subinst and atom.objinst:
-            return {atom.make_subject_instance(subinst) for subinst 
-                    in db['kb']['ROS'][atom.rel][atom.objinst]}
-        
-        elif atom.subinst and atom.objinst:
-            fact = (atom.subinst, atom.rel, atom.objinst)
-            if fact in db['agg_index']['P'][atom.rel]:
-                return {atom}
-            else:
-                return set()
-    
+        if atom.rel:
+            if not atom.subinst and not atom.objinst:
+                return {atom.make_general_instance(fact) 
+                        for fact in db['agg_index']['P'][atom.rel]}
+                    
+            elif atom.subinst and not atom.objinst:
+                return {atom.make_object_instance(objinst) for objinst 
+                        in db['kb']['RSO'][atom.rel][atom.subinst]}
+            
+            elif not atom.subinst and atom.objinst:
+                return {atom.make_subject_instance(subinst) for subinst 
+                        in db['kb']['ROS'][atom.rel][atom.objinst]}
+            
+            elif atom.subinst and atom.objinst:
+                fact = (atom.subinst, atom.rel, atom.objinst)
+                if fact in db['agg_index']['P'][atom.rel]:
+                    return {atom}
+                else:
+                    return set()
+
+        else:
+            insts = set()
+            for _, facts in db['agg_index']['P'].items():
+                for fact in facts:
+                    insts.add(atom.make_projection_instance(fact))
+            return insts
+
     except KeyError:
         return set()
 
@@ -109,12 +117,14 @@ def select_distinct_for_query(var, query, db, result):
     return result
 
 
-def count_projection_for_query(var, head, body, threshold, db):
+def count_projection_for_query(var, patom, rule, threshold, db):
     xmap = {}
-    query = body
+    query = rule
     
-    insts = get_atom_instantiations(head, db)
-    if head.var_in_atom(var):        
+    insts = get_atom_instantiations(patom, db)
+    print(len(insts))
+    #'''
+    if patom.var_in_atom(var):        
         for iatom in insts:
             qp = query.copy()
             qp.add(iatom)
@@ -136,7 +146,7 @@ def count_projection_for_query(var, head, body, threshold, db):
                     xmap[varsub] = 1
     
     return {svar:n for svar, n in xmap.items() if n >= threshold}
-
+#'''
 
 def calc_support(head, body, db):
     count = 0
