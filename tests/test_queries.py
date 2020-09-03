@@ -81,101 +81,65 @@ class TestQueries(unittest.TestCase):
         self.assertEqual(get_atom_size(tdbd, self.tdb), 2)
         self.assertEqual(get_atom_size(tdbe, self.tdb), 1)
     
-    def test_instantiate_query_with_atom_bindings(self):
+    def test_instantiate_with_atom_bindings(self):
         iaa = Atom('?a', None, '<rel>', '?b', None)
         iab = Atom('?a', '<svar>', '<rel>', '?b', None)
         iac = Atom('?a', None, '<rel>', '?b', '<ovar>')
         iad = Atom('?a', '<svar>', '<rel>', '?b', '<ovar>') 
         
-        q = {Atom('?a', None, '<relA>', '?b', None)}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
-                         {Atom('?a', None, '<relA>', '?b', None)})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
-                         {Atom('?a', '<svar>', '<relA>', '?b', None)})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
-                         {Atom('?a', None, '<relA>', '?b', '<ovar>')})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
-                         {Atom('?a', '<svar>', '<relA>', '?b', '<ovar>')})
+        q = Atom('?a', None, '<relA>', '?b', None)
+        self.assertEqual(instantiate_with_atom_bindings(iaa, q), 
+                         Atom('?a', None, '<relA>', '?b', None))
+        self.assertEqual(instantiate_with_atom_bindings(iab, q), 
+                         Atom('?a', '<svar>', '<relA>', '?b', None))
+        self.assertEqual(instantiate_with_atom_bindings(iac, q), 
+                         Atom('?a', None, '<relA>', '?b', '<ovar>'))
+        self.assertEqual(instantiate_with_atom_bindings(iad, q), 
+                         Atom('?a', '<svar>', '<relA>', '?b', '<ovar>'))
     
-        q = {Atom('?a', None, '<relA>', '?c', None)}  
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
-                         {Atom('?a', None, '<relA>', '?c', None)})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
-                         {Atom('?a', '<svar>', '<relA>', '?c', None)})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
-                         {Atom('?a', None, '<relA>', '?c', None)})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
-                         {Atom('?a', '<svar>', '<relA>', '?c', None)})
+        q = Atom('?a', None, '<relA>', '?c', None)  
+        self.assertEqual(instantiate_with_atom_bindings(iaa, q), 
+                         Atom('?a', None, '<relA>', '?c', None))
+        self.assertEqual(instantiate_with_atom_bindings(iab, q), 
+                         Atom('?a', '<svar>', '<relA>', '?c', None))
+        self.assertEqual(instantiate_with_atom_bindings(iac, q), 
+                         Atom('?a', None, '<relA>', '?c', None))
+        self.assertEqual(instantiate_with_atom_bindings(iad, q), 
+                         Atom('?a', '<svar>', '<relA>', '?c', None))
 
         
-        q = {Atom('?e', None, '<relA>', '?b', None)}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
-                         {Atom('?e', None, '<relA>', '?b', None)})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
-                         {Atom('?e', None, '<relA>', '?b', None)})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
-                         {Atom('?e', None, '<relA>', '?b', '<ovar>')})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
-                         {Atom('?e', None, '<relA>', '?b', '<ovar>')})
+        q = Atom('?e', None, '<relA>', '?b', None)
+        self.assertEqual(instantiate_with_atom_bindings(iaa, q), 
+                         Atom('?e', None, '<relA>', '?b', None))
+        self.assertEqual(instantiate_with_atom_bindings(iab, q), 
+                         Atom('?e', None, '<relA>', '?b', None))
+        self.assertEqual(instantiate_with_atom_bindings(iac, q), 
+                         Atom('?e', None, '<relA>', '?b', '<ovar>'))
+        self.assertEqual(instantiate_with_atom_bindings(iad, q), 
+                         Atom('?e', None, '<relA>', '?b', '<ovar>'))
 
 
-        q = {Atom('?e', None, '<relA>', '?f', None)}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
-                         {Atom('?e', None, '<relA>', '?f', None)})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
-                         {Atom('?e', None, '<relA>', '?f', None)})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
-                         {Atom('?e', None, '<relA>', '?f', None)})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
-                         {Atom('?e', None, '<relA>', '?f', None)})
+        q = Atom('?e', None, '<relA>', '?f', None)
+        self.assertEqual(instantiate_with_atom_bindings(iaa, q), 
+                         Atom('?e', None, '<relA>', '?f', None))
+        self.assertEqual(instantiate_with_atom_bindings(iab, q), 
+                         Atom('?e', None, '<relA>', '?f', None))
+        self.assertEqual(instantiate_with_atom_bindings(iac, q), 
+                         Atom('?e', None, '<relA>', '?f', None))
+        self.assertEqual(instantiate_with_atom_bindings(iad, q), 
+                         Atom('?e', None, '<relA>', '?f', None))
 
-        q = {Atom('?b', None, '<relA>', '?a', None)}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), 
-                         {Atom('?b', None, '<relA>', '?a', None)})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), 
-                         {Atom('?b', None, '<relA>', '?a', '<svar>')})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), 
-                         {Atom('?b', '<ovar>', '<relA>', '?a', None)})
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), 
-                         {Atom('?b', '<ovar>', '<relA>', '?a', '<svar>')})
+        q = Atom('?b', None, '<relA>', '?a', None)
+        self.assertEqual(instantiate_with_atom_bindings(iaa, q), 
+                         Atom('?b', None, '<relA>', '?a', None))
+        self.assertEqual(instantiate_with_atom_bindings(iab, q), 
+                         Atom('?b', None, '<relA>', '?a', '<svar>'))
+        self.assertEqual(instantiate_with_atom_bindings(iac, q), 
+                         Atom('?b', '<ovar>', '<relA>', '?a', None))
+        self.assertEqual(instantiate_with_atom_bindings(iad, q), 
+                         Atom('?b', '<ovar>', '<relA>', '?a', '<svar>'))
       
-        q  = {Atom('?a', None, '<relA>', '?b', None), 
-              Atom('?a', None, '<relB>', '?b', None)}
-        aq = {Atom('?a', None, '<relA>', '?b', None), 
-              Atom('?a', None, '<relB>', '?b', None)}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), aq)
         
-        aq = {Atom('?a', '<svar>', '<relA>', '?b', None), 
-              Atom('?a', '<svar>', '<relB>', '?b', None)}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), aq)
-        
-        aq = {Atom('?a', None, '<relA>', '?b', '<ovar>'), 
-              Atom('?a', None, '<relB>', '?b', '<ovar>')}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), aq)
-        
-        aq = {Atom('?a', '<svar>', '<relA>', '?b', '<ovar>'), 
-              Atom('?a', '<svar>', '<relB>', '?b', '<ovar>')}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), aq)
-
-        q  = {Atom('?a', None, '<relA>', '?e', None), 
-              Atom('?b', None, '<relB>', '?f', None)}
-        aq = {Atom('?a', None, '<relA>', '?e', None), 
-              Atom('?b', None, '<relB>', '?f', None)}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iaa), aq)
-        
-        aq = {Atom('?a', '<svar>', '<relA>', '?e', None), 
-              Atom('?b', None, '<relB>', '?f', None)}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iab), aq)
-        
-        aq = {Atom('?a', None, '<relA>', '?e', None), 
-              Atom('?b', '<ovar>', '<relB>', '?f', None)}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iac), aq)
-        
-        aq = {Atom('?a', '<svar>', '<relA>', '?e', None), 
-              Atom('?b', '<ovar>', '<relB>', '?f', None)}
-        self.assertEqual(instantiate_query_with_atom_bindings(q, iad), aq)
-
-
     def test_check_query_existence(self):
         adbq = {Atom('?a', None, '<LivesIn>', '?b', None)} 
         self.assertEqual(check_query_existence(adbq, self.adb), True)
@@ -198,7 +162,6 @@ class TestQueries(unittest.TestCase):
         ydbq = {Atom('?e', None, '<graduatedFrom>', '?b', None), 
                 Atom('?e', None, '<hasAcademicAdvisor>', '?a', None)}
         self.assertEqual(check_query_existence(ydbq, self.ydb), True)
-
 
 if '__name__' == '__main__':
     unittest.main()
